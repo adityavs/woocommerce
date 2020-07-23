@@ -496,10 +496,17 @@ $untested_plugins   = $plugin_updates->get_untested_plugins( WC()->version, 'min
 		?>
 	</tbody>
 </table>
-<table class="wc_status_table widefat" cellspacing="0">
+<table id="status-database" class="wc_status_table widefat" cellspacing="0">
 	<thead>
 	<tr>
-		<th colspan="3" data-export-label="Database"><h2><?php esc_html_e( 'Database', 'woocommerce' ); ?></h2></th>
+		<th colspan="3" data-export-label="Database">
+			<h2>
+				<?php
+					esc_html_e( 'Database', 'woocommerce' );
+					self::output_tables_info();
+				?>
+			</h2>
+		</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -652,49 +659,7 @@ $untested_plugins   = $plugin_updates->get_untested_plugins( WC()->version, 'min
 		</tr>
 	</thead>
 	<tbody>
-		<?php
-		foreach ( $active_plugins as $plugin ) { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			if ( ! empty( $plugin['name'] ) ) {
-				$dirname = dirname( $plugin['plugin'] );
-
-				// Link the plugin name to the plugin url if available.
-				$plugin_name = esc_html( $plugin['name'] );
-				if ( ! empty( $plugin['url'] ) ) {
-					$plugin_name = '<a href="' . esc_url( $plugin['url'] ) . '" aria-label="' . esc_attr__( 'Visit plugin homepage', 'woocommerce' ) . '" target="_blank">' . $plugin_name . '</a>';
-				}
-
-				$version_string = '';
-				$network_string = '';
-				if ( strstr( $plugin['url'], 'woothemes.com' ) || strstr( $plugin['url'], 'woocommerce.com' ) ) {
-					if ( ! empty( $plugin['version_latest'] ) && version_compare( $plugin['version_latest'], $plugin['version'], '>' ) ) {
-						/* translators: %s: plugin latest version */
-						$version_string = ' &ndash; <strong style="color:red;">' . sprintf( esc_html__( '%s is available', 'woocommerce' ), $plugin['version_latest'] ) . '</strong>';
-					}
-
-					if ( false !== $plugin['network_activated'] ) {
-						$network_string = ' &ndash; <strong style="color:black;">' . esc_html__( 'Network enabled', 'woocommerce' ) . '</strong>';
-					}
-				}
-				$untested_string = '';
-				if ( array_key_exists( $plugin['plugin'], $untested_plugins ) ) {
-					$untested_string = ' &ndash; <strong style="color:red;">' . esc_html__( 'Not tested with the active version of WooCommerce', 'woocommerce' ) . '</strong>';
-				}
-				?>
-				<tr>
-					<td><?php echo wp_kses_post( $plugin_name ); ?></td>
-					<td class="help">&nbsp;</td>
-					<td>
-					<?php
-						/* translators: %s: plugin author */
-						printf( esc_html__( 'by %s', 'woocommerce' ), esc_html( $plugin['author_name'] ) );
-						echo ' &ndash; ' . esc_html( $plugin['version'] ) . $version_string . $untested_string . $network_string; // WPCS: XSS ok.
-					?>
-					</td>
-				</tr>
-				<?php
-			}
-		}
-		?>
+		<?php self::output_plugins_info( $active_plugins, $untested_plugins ); ?>
 	</tbody>
 </table>
 <table class="wc_status_table widefat" cellspacing="0">
@@ -704,49 +669,7 @@ $untested_plugins   = $plugin_updates->get_untested_plugins( WC()->version, 'min
 		</tr>
 	</thead>
 	<tbody>
-		<?php
-		foreach ( $inactive_plugins as $plugin ) { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			if ( ! empty( $plugin['name'] ) ) {
-				$dirname = dirname( $plugin['plugin'] );
-
-				// Link the plugin name to the plugin url if available.
-				$plugin_name = esc_html( $plugin['name'] );
-				if ( ! empty( $plugin['url'] ) ) {
-					$plugin_name = '<a href="' . esc_url( $plugin['url'] ) . '" aria-label="' . esc_attr__( 'Visit plugin homepage', 'woocommerce' ) . '" target="_blank">' . $plugin_name . '</a>';
-				}
-
-				$version_string = '';
-				$network_string = '';
-				if ( strstr( $plugin['url'], 'woothemes.com' ) || strstr( $plugin['url'], 'woocommerce.com' ) ) {
-					if ( ! empty( $plugin['version_latest'] ) && version_compare( $plugin['version_latest'], $plugin['version'], '>' ) ) {
-						/* translators: %s: plugin latest version */
-						$version_string = ' &ndash; <strong style="color:red;">' . sprintf( esc_html__( '%s is available', 'woocommerce' ), $plugin['version_latest'] ) . '</strong>';
-					}
-
-					if ( false !== $plugin['network_activated'] ) {
-						$network_string = ' &ndash; <strong style="color:black;">' . esc_html__( 'Network enabled', 'woocommerce' ) . '</strong>';
-					}
-				}
-				$untested_string = '';
-				if ( array_key_exists( $plugin['plugin'], $untested_plugins ) ) {
-					$untested_string = ' &ndash; <strong style="color:red;">' . esc_html__( 'Not tested with the active version of WooCommerce', 'woocommerce' ) . '</strong>';
-				}
-				?>
-				<tr>
-					<td><?php echo wp_kses_post( $plugin_name ); ?></td>
-					<td class="help">&nbsp;</td>
-					<td>
-					<?php
-						/* translators: %s: plugin author */
-						printf( esc_html__( 'by %s', 'woocommerce' ), esc_html( $plugin['author_name'] ) );
-						echo ' &ndash; ' . esc_html( $plugin['version'] ) . $version_string . $untested_string . $network_string; // WPCS: XSS ok.
-					?>
-					</td>
-				</tr>
-				<?php
-			}
-		}
-		?>
+		<?php self::output_plugins_info( $inactive_plugins, $untested_plugins ); ?>
 	</tbody>
 </table>
 <?php
@@ -876,7 +799,7 @@ if ( 0 < count( $dropins_mu_plugins['mu_plugins'] ) ) :
 		</tr>
 		<tr>
 			<td data-export-label="Connected to WooCommerce.com"><?php esc_html_e( 'Connected to WooCommerce.com', 'woocommerce' ); ?>:</td>
-			<td class="help"><?php echo wc_help_tip( esc_html__( 'Are your site connected to WooCommerce.com?', 'woocommerce' ) ); /* phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped */ ?></td>
+			<td class="help"><?php echo wc_help_tip( esc_html__( 'Is your site connected to WooCommerce.com?', 'woocommerce' ) ); /* phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped */ ?></td>
 			<td><?php echo 'yes' === $settings['woocommerce_com_connected'] ? '<mark class="yes"><span class="dashicons dashicons-yes"></span></mark>' : '<mark class="no">&ndash;</mark>'; ?></td>
 		</tr>
 	</tbody>
@@ -951,10 +874,11 @@ if ( 0 < count( $dropins_mu_plugins['mu_plugins'] ) ) :
 			<td class="help"><?php echo wc_help_tip( esc_html__( 'The installed version of the current active theme.', 'woocommerce' ) ); /* phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped */ ?></td>
 			<td>
 				<?php
-				echo esc_html( $theme['version'] );
 				if ( version_compare( $theme['version'], $theme['version_latest'], '<' ) ) {
-					/* translators: %s: theme latest version */
-					echo ' &ndash; <strong style="color:red;">' . sprintf( esc_html__( '%s is available', 'woocommerce' ), esc_html( $theme['version_latest'] ) ) . '</strong>';
+					/* translators: 1: current version. 2: latest version */
+					echo esc_html( sprintf( __( '%1$s (update to version %2$s is available)', 'woocommerce' ), $theme['version'], $theme['version_latest'] ) );
+				} else {
+					echo esc_html( $theme['version'] );
 				}
 				?>
 			</td>
